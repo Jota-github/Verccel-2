@@ -1,46 +1,44 @@
 import React from 'react';
 
-// Adicionada a prop onConfirm para a amarração com o backend
-export function CheckoutModal({ isOpen, onClose, cartItems, onConfirm }) {
+// Adicionado "default" para resolver o erro de exportação
+export default function CheckoutModal({ isOpen, onClose, cartItems, onConfirm }) {
   if (!isOpen) return null;
 
   const total = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl border border-gray-200">
-        <div className="bg-[#000040] text-white p-5 text-center font-bold text-xl relative">
-          Finalizando sua compra
-          <button onClick={onClose} className="absolute right-6 top-5 hover:text-gray-300">✕</button>
-        </div>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+      <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
+        <h2 className="text-2xl font-black text-[#000040] mb-6 uppercase tracking-tighter text-center">
+          Confirmar Pedido
+        </h2>
         
-        <div className="p-8">
-          <div className="space-y-4 mb-8 max-h-60 overflow-y-auto pr-2">
-            {cartItems.map((item, index) => (
-              <div key={index} className="border-b border-gray-300 pb-2">
-                <p className="font-bold text-lg">{item.name}</p>
-                <div className="flex justify-between text-gray-600">
-                  <span>{String(item.quantity).padStart(2, '0')} un.</span>
-                  <span className="font-bold text-black">
-                    R$ {item.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="space-y-4 mb-8 max-h-60 overflow-y-auto pr-2">
+          {cartItems.map(item => (
+            <div key={item.id} className="flex justify-between text-sm border-b pb-2">
+              <span className="font-bold text-gray-600">{item.quantity}x {item.name}</span>
+              <span className="font-black text-[#000040]">R$ {(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
 
-          <div className="bg-[#dce1e5] p-6 rounded-2xl mb-6 flex justify-between items-center">
-            <span className="font-bold text-xl uppercase">Total:</span>
-            <span className="font-black text-2xl">
-              R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
+        <div className="flex justify-between items-center mb-8 p-4 bg-gray-50 rounded-xl">
+          <span className="font-black text-gray-400">TOTAL:</span>
+          <span className="text-2xl font-black text-[#000040]">R$ {total.toFixed(2)}</span>
+        </div>
 
-          <button 
-            className="w-full bg-[#f0ad00] hover:bg-[#d99d00] text-[#000040] font-black py-4 rounded-xl transition-all uppercase tracking-widest shadow-lg"
-            onClick={onConfirm} // Agora chama a função que integra com o banco de dados
+        <div className="flex gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 py-4 font-bold text-gray-400 hover:text-gray-600 transition uppercase text-xs tracking-widest"
           >
-            Finalizar
+            Voltar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-[2] bg-green-600 text-white py-4 rounded-xl font-black hover:bg-green-700 transition shadow-lg uppercase text-xs tracking-widest"
+          >
+            Confirmar Compra
           </button>
         </div>
       </div>
