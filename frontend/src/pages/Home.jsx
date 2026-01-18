@@ -4,8 +4,10 @@ import ProductCard from "../components/ProductCard";
 import ProductModal from "../components/ProductModal";
 import Navbar from "../components/Navbar";
 
-// Adicionada a prop onLogout para receber a função do App.jsx
 export default function Home({ profile, onLogout }) {
+  // Lógica para definir se é admin com base no perfil recebido do login
+  const isAdmin = profile === 'admin';
+
   const initialMockProducts = [
     { id: 1, name: "Bateria Moura 60Ah (M60AD)", price: 450.00, stock: 15 },
     { id: 2, name: "Painel Solar Monocristalino 330W", price: 890.00, stock: 8 },
@@ -72,20 +74,34 @@ export default function Home({ profile, onLogout }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar 
-        isAdmin={true} 
+        isAdmin={isAdmin} // Agora usa o valor dinâmico baseado no login
         onAddProduct={() => { setEditingProduct(null); setIsModalOpen(true); }}
-        onLogout={onLogout} // Agora usa a função real de logout
+        onLogout={onLogout} 
       />
       
       <main className="p-4 md:p-8 max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold text-[#000040] mb-8 uppercase tracking-tighter">Catálogo de Produtos</h1>
+        <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-bold text-[#000040] uppercase tracking-tighter">
+                Catálogo de Produtos
+            </h1>
+            
+            {/* O botão de checkout só aparece para quem NÃO é admin (visão de usuário) */}
+            {!isAdmin && cart.length > 0 && (
+                <button 
+                    onClick={handleCheckout}
+                    className="bg-green-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:bg-green-700 transition-all"
+                >
+                    Finalizar Compra (R$ {cart.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2)})
+                </button>
+            )}
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map(product => (
             <ProductCard 
               key={product.id} 
               product={product} 
-              isAdmin={true}
+              isAdmin={isAdmin} // Condiciona a exibição de botões de edição
               onEdit={() => { setEditingProduct(product); setIsModalOpen(true); }}
               onAddToCart={addToCart}
             />
