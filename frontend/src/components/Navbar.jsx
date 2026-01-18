@@ -1,10 +1,11 @@
 import React from 'react';
 
-export function Navbar({ isAdmin, onAddProduct, onLogout }) {
+// Adicionado "default" para corrigir o erro de importação no Home.jsx
+export default function Navbar({ isAdmin, onAddProduct, onLogout }) {
   return (
     <nav className="bg-[#000040] text-white px-8 py-4 flex justify-between items-center shadow-lg">
       <div className="flex items-center gap-4">
-        {/* Imagem alterada para a versão apenas com o M colorido */}
+        {/* Imagem configurada para a versão apenas com o M colorido */}
         <img 
           src="/logo-moura.png" 
           alt="Moura" 

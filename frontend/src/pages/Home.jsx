@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import api from "../api/api";
 import ProductCard from "../components/ProductCard";
 import ProductModal from "../components/ProductModal";
-import Navbar from "../components/Navbar";
+import Navbar from "../components/Navbar"; // Importação padrão corrigida
 
 export default function Home() {
-  // 🔹 LISTA DE DADOS EXPANDIDA PARA SIMULAR UM BACK-END REPLETO DE INFORMAÇÕES
+  // 🔹 LISTA DE DADOS EXPANDIDA PARA SIMULAR UM BACK-END COMPLETO
   const initialMockProducts = [
     { id: 1, name: "Bateria Moura 60Ah (M60AD)", price: 450.00, stock: 15, category: "Automotiva" },
     { id: 2, name: "Painel Solar Monocristalino 330W", price: 890.00, stock: 8, category: "Energia Solar" },
@@ -30,7 +30,7 @@ export default function Home() {
         setProducts(response.data);
       }
     } catch (error) {
-      console.warn("⚠️ Backend offline - Modo Demonstração com 9 produtos carregados.");
+      console.warn("⚠️ Backend offline - Modo Demonstração Ativo.");
     }
   };
 
@@ -53,7 +53,6 @@ export default function Home() {
   };
 
   const addToCart = (product) => {
-    // Regra de Negócio: Não permite adicionar se não houver estoque disponível
     const cartItem = cart.find(item => item.id === product.id);
     const currentQtyInCart = cartItem ? cartItem.quantity : 0;
 
@@ -69,8 +68,7 @@ export default function Home() {
   };
 
   const handleCheckout = () => {
-    // Regra de Negócio do Case: Ao fazer checkout, diminuir estoque [cite: 376]
-    // Se o estoque for insuficiente, bloquear a venda 
+    // Regra de Negócio: Diminuir stock ao finalizar
     const newProducts = products.map(p => {
       const cartItem = cart.find(item => item.id === p.id);
       return cartItem ? { ...p, stock: p.stock - cartItem.quantity } : p;
@@ -78,32 +76,27 @@ export default function Home() {
     
     setProducts(newProducts);
     setCart([]);
-    alert("Checkout realizado com sucesso! O estoque foi atualizado conforme as regras de negócio.");
+    alert("Checkout realizado com sucesso! O stock foi atualizado conforme as regras de negócio.");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Navbar com as props corretas do seu componente */}
       <Navbar 
-        cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)} 
-        cartTotal={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
-        onCheckout={handleCheckout}
+        isAdmin={true} 
+        onAddProduct={() => { setEditingProduct(null); setIsModalOpen(true); }}
+        onLogout={() => alert("Logout simulado")}
       />
       
       <main className="p-4 md:p-8 max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-moura-blue">Catálogo Técnico</h1>
-            <p className="text-sm text-gray-500 italic">Simulação de estoque em tempo real</p>
+            <h1 className="text-2xl font-bold text-[#000040]">Catálogo de Produtos</h1>
+            <p className="text-sm text-gray-500 italic">Demonstração de Regras de Negócio e Stock</p>
           </div>
-          <button 
-            onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-            className="bg-moura-blue hover:bg-blue-800 text-white px-6 py-2 rounded-lg font-bold transition-colors w-full md:w-auto"
-          >
-            + Adicionar Produto
-          </button>
         </div>
 
-        {/* Grid Responsivo para QR Code/Mobile */}
+        {/* Grid Responsivo otimizado para Mobile/QR Code */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map(product => (
             <ProductCard 
