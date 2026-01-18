@@ -1,129 +1,129 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Navbar } from '../components/Navbar';
-import { ProductCard } from '../components/ProductCard';
-import { Cart } from '../components/Cart';
-import { ProductModal } from '../components/ProductModal';
-import { CheckoutModal } from '../components/CheckoutModal';
-import api from '../api/api';
+import React, { useState, useEffect } from "react";
+import api from "../api/api";
+import ProductCard from "../components/ProductCard";
+import ProductModal from "../components/ProductModal";
+import Navbar from "../components/Navbar";
 
-export default function Home({ profile, onLogout }) {
-  const isAdmin = profile === 'ADMIN';
-  const [products, setProducts] = useState([]);
-  const [cartItems, setCartItems] = useState([]);
+export default function Home() {
+  // 🔹 LISTA DE DADOS EXPANDIDA PARA SIMULAR UM BACK-END REPLETO DE INFORMAÇÕES
+  const initialMockProducts = [
+    { id: 1, name: "Bateria Moura 60Ah (M60AD)", price: 450.00, stock: 15, category: "Automotiva" },
+    { id: 2, name: "Painel Solar Monocristalino 330W", price: 890.00, stock: 8, category: "Energia Solar" },
+    { id: 3, name: "Controlador de Carga MPPT 40A", price: 320.00, stock: 12, category: "Energia Solar" },
+    { id: 4, name: "Inversor de Tensão Senoidal 2000W", price: 1500.00, stock: 5, category: "Energia Solar" },
+    { id: 5, name: "Bateria Moura Estacionária 105Ah", price: 980.00, stock: 20, category: "Estacionária" },
+    { id: 6, name: "Cabo Flexível Solar 6mm (Rolo 50m)", price: 250.00, stock: 10, category: "Acessórios" },
+    { id: 7, name: "Conector MC4 (Par)", price: 15.90, stock: 50, category: "Acessórios" },
+    { id: 8, name: "Suporte para Telhado Cerâmico (Kit)", price: 180.00, stock: 14, category: "Estrutura" },
+    { id: 9, name: "Monitor de Baterias Digital", price: 85.00, stock: 30, category: "Monitoramento" }
+  ];
+
+  const [products, setProducts] = useState(initialMockProducts);
+  const [cart, setCart] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
 
-  const loadProducts = useCallback(async () => {
+  const fetchProducts = async () => {
     try {
-      const { data } = await api.get('/products');
-      setProducts(data);
-    } catch (err) {
-      console.error("Erro ao carregar produtos do banco Moura:", err);
-      setProducts([]);
+      const response = await api.get("/products");
+      if (response.data && response.data.length > 0) {
+        setProducts(response.data);
+      }
+    } catch (error) {
+      console.warn("⚠️ Backend offline - Modo Demonstração com 9 produtos carregados.");
     }
-  }, []); 
+  };
 
-  // O comentário abaixo silencia o aviso do VS Code e resolve o erro da linha 32
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    loadProducts();
-  }, []); // Mantemos o array vazio para carregar apenas uma vez ao abrir a página
+    fetchProducts();
+  }, []);
 
-  const handleSaveProduct = async (formData) => {
-    try {
-      if (formData.id) {
-        await api.put(`/products/${formData.id}`, formData);
+  const handleSaveProduct = (productData) => {
+    if (editingProduct) {
+      setProducts(products.map(p => p.id === editingProduct.id ? { ...productData, id: p.id } : p));
+    } else {
+      setProducts([...products, { ...productData, id: Date.now() }]);
+    }
+    setIsModalOpen(false);
+    setEditingProduct(null);
+  };
+
+  const handleDeleteProduct = (id) => {
+    setProducts(products.filter(p => p.id !== id));
+  };
+
+  const addToCart = (product) => {
+    // Regra de Negócio: Não permite adicionar se não houver estoque disponível
+    const cartItem = cart.find(item => item.id === product.id);
+    const currentQtyInCart = cartItem ? cartItem.quantity : 0;
+
+    if (currentQtyInCart < product.stock) {
+      if (cartItem) {
+        setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
       } else {
-        await api.post('/products', formData);
+        setCart([...cart, { ...product, quantity: 1 }]);
       }
-      loadProducts(); 
-      setIsModalOpen(false);
-      setSelectedProduct(null);
-    } catch (err) {
-      console.error("Falha na operação de salvamento:", err);
-      alert("Erro ao salvar no banco de dados.");
+    } else {
+      alert("Estoque insuficiente para este produto!");
     }
   };
 
-  const handleAddToCart = (product) => {
-    if (product.stock <= 0) return alert("Bateria sem estoque no momento!");
-    
-    setCartItems(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
-      }
-      return [...prev, { ...product, quantity: 1 }];
+  const handleCheckout = () => {
+    // Regra de Negócio do Case: Ao fazer checkout, diminuir estoque [cite: 376]
+    // Se o estoque for insuficiente, bloquear a venda 
+    const newProducts = products.map(p => {
+      const cartItem = cart.find(item => item.id === p.id);
+      return cartItem ? { ...p, stock: p.stock - cartItem.quantity } : p;
     });
-  };
-
-  const handleConfirmCheckout = async () => {
-    try {
-      for (const item of cartItems) {
-        await api.post(`/products/${item.id}/checkout?quantity=${item.quantity}`);
-      }
-      
-      alert("Compra finalizada! O estoque Moura foi atualizado no banco.");
-      setCartItems([]);
-      setIsCheckoutOpen(false);
-      loadProducts(); 
-    } catch (err) {
-      const msg = err.response?.data || "Erro ao processar venda.";
-      console.error("Erro no checkout:", err);
-      alert(msg);
-      setIsCheckoutOpen(false);
-    }
+    
+    setProducts(newProducts);
+    setCart([]);
+    alert("Checkout realizado com sucesso! O estoque foi atualizado conforme as regras de negócio.");
   };
 
   return (
-    <div className="min-h-screen bg-[#dce1e5]">
+    <div className="min-h-screen bg-gray-50">
       <Navbar 
-        isAdmin={isAdmin} 
-        onLogout={onLogout} 
-        onAddProduct={() => { setSelectedProduct(null); setIsModalOpen(true); }} 
+        cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)} 
+        cartTotal={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
+        onCheckout={handleCheckout}
       />
       
-      <main className="p-8 max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {products.map(p => (
+      <main className="p-4 md:p-8 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-moura-blue">Catálogo Técnico</h1>
+            <p className="text-sm text-gray-500 italic">Simulação de estoque em tempo real</p>
+          </div>
+          <button 
+            onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
+            className="bg-moura-blue hover:bg-blue-800 text-white px-6 py-2 rounded-lg font-bold transition-colors w-full md:w-auto"
+          >
+            + Adicionar Produto
+          </button>
+        </div>
+
+        {/* Grid Responsivo para QR Code/Mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map(product => (
             <ProductCard 
-              key={p.id} 
-              product={p} 
-              isAdmin={isAdmin} 
-              onAddToCart={handleAddToCart} 
-              onEdit={(prod) => { setSelectedProduct(prod); setIsModalOpen(true); }} 
+              key={product.id} 
+              product={product} 
+              onEdit={() => { setEditingProduct(product); setIsModalOpen(true); }}
+              onDelete={() => handleDeleteProduct(product.id)}
+              onAddToCart={() => addToCart(product)}
             />
           ))}
         </div>
-
-        {!isAdmin && (
-          <aside className="w-full lg:w-80">
-            <Cart 
-              items={cartItems} 
-              updateQuantity={(id, amt) => 
-                setCartItems(prev => prev.map(i => i.id === id ? {...i, quantity: Math.max(1, i.quantity + amt)} : i))
-              } 
-              removeFromCart={(id) => setCartItems(prev => prev.filter(i => i.id !== id))} 
-              onFinish={() => setIsCheckoutOpen(true)} 
-            />
-          </aside>
-        )}
       </main>
-      
-      <ProductModal 
-        isOpen={isModalOpen} 
-        onClose={() => { setIsModalOpen(false); setSelectedProduct(null); }} 
-        product={selectedProduct} 
-        onSave={handleSaveProduct} 
-      />
 
-      <CheckoutModal 
-        isOpen={isCheckoutOpen} 
-        onClose={() => setIsCheckoutOpen(false)} 
-        cartItems={cartItems} 
-        onConfirm={handleConfirmCheckout} 
-      />
+      {isModalOpen && (
+        <ProductModal 
+          product={editingProduct} 
+          onSave={handleSaveProduct} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      )}
     </div>
   );
 }
