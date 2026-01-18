@@ -4,7 +4,8 @@ import ProductCard from "../components/ProductCard";
 import ProductModal from "../components/ProductModal";
 import Navbar from "../components/Navbar";
 
-export default function Home() {
+// Adicionada a prop onLogout para receber a função do App.jsx
+export default function Home({ profile, onLogout }) {
   const initialMockProducts = [
     { id: 1, name: "Bateria Moura 60Ah (M60AD)", price: 450.00, stock: 15 },
     { id: 2, name: "Painel Solar Monocristalino 330W", price: 890.00, stock: 8 },
@@ -73,7 +74,7 @@ export default function Home() {
       <Navbar 
         isAdmin={true} 
         onAddProduct={() => { setEditingProduct(null); setIsModalOpen(true); }}
-        onLogout={() => alert("Logout simulado")}
+        onLogout={onLogout} // Agora usa a função real de logout
       />
       
       <main className="p-4 md:p-8 max-w-6xl mx-auto">

@@ -3,7 +3,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 
 export default function App() {
-  // Inicializa o estado lendo o que está salvo no navegador
+  // Inicializa o estado lendo o que está salvo no navegador para manter o login ao dar F5
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('isLoggedIn') === 'true';
   });
@@ -22,7 +22,7 @@ export default function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserProfile(null);
-    localStorage.clear(); // Limpa os dados de acesso ao sair
+    localStorage.clear(); // Limpa tokens e dados de sessão
   };
 
   return (
