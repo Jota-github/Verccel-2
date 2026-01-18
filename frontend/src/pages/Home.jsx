@@ -5,7 +5,6 @@ import ProductModal from "../components/ProductModal";
 import Navbar from "../components/Navbar";
 
 export default function Home() {
-  // Dados Mockados para simular o back-end durante a apresentação
   const initialMockProducts = [
     { id: 1, name: "Bateria Moura 60Ah (M60AD)", price: 450.00, stock: 15 },
     { id: 2, name: "Painel Solar Monocristalino 330W", price: 890.00, stock: 8 },
@@ -30,7 +29,7 @@ export default function Home() {
         setProducts(response.data);
       }
     } catch (error) {
-      console.warn("⚠️ Backend offline — Usando modo de demonstração.");
+      console.warn("⚠️ Utilizando modo de demonstração offline.");
     }
   };
 
@@ -50,14 +49,10 @@ export default function Home() {
 
   const addToCart = (product) => {
     const cartItem = cart.find(item => item.id === product.id);
-    const currentQtyInCart = cartItem ? cartItem.quantity : 0;
-
-    if (currentQtyInCart < product.stock) {
-      if (cartItem) {
-        setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
-      } else {
-        setCart([...cart, { ...product, quantity: 1 }]);
-      }
+    if (cartItem && cartItem.quantity < product.stock) {
+      setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+    } else if (!cartItem && product.stock > 0) {
+      setCart([...cart, { ...product, quantity: 1 }]);
     } else {
       alert("Estoque insuficiente!");
     }
@@ -70,7 +65,7 @@ export default function Home() {
     });
     setProducts(newProducts);
     setCart([]);
-    alert("Venda finalizada! O estoque foi atualizado localmente.");
+    alert("Venda finalizada com sucesso!");
   };
 
   return (
@@ -82,7 +77,7 @@ export default function Home() {
       />
       
       <main className="p-4 md:p-8 max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold text-[#000040] mb-8">Catálogo de Produtos</h1>
+        <h1 className="text-2xl font-bold text-[#000040] mb-8 uppercase tracking-tighter">Catálogo de Produtos</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map(product => (
