@@ -6,7 +6,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('');
 
   // Mantido: Valida no Banco/Java conforme sua configuração
-  const USE_BACKEND = true;
+  const USE_BACKEND = false;
 
   const handleManualLogin = async (role) => {
     if (USE_BACKEND) {
