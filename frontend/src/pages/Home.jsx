@@ -3,9 +3,10 @@ import api from "../api/api";
 import ProductCard from "../components/ProductCard";
 import ProductModal from "../components/ProductModal";
 import Navbar from "../components/Navbar";
+import Cart from "../components/Cart"; // Certifique-se de que este arquivo existe
 
 export default function Home({ profile, onLogout }) {
-  // Lógica para definir se é admin com base no perfil recebido do login
+  // Define se é admin comparando com a string enviada pelo Login
   const isAdmin = profile === 'admin';
 
   const initialMockProducts = [
@@ -52,13 +53,19 @@ export default function Home({ profile, onLogout }) {
 
   const addToCart = (product) => {
     const cartItem = cart.find(item => item.id === product.id);
-    if (cartItem && cartItem.quantity < product.stock) {
-      setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
-    } else if (!cartItem && product.stock > 0) {
+    if (cartItem) {
+      if (cartItem.quantity < product.stock) {
+        setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+      } else {
+        alert("Limite de estoque atingido!");
+      }
+    } else if (product.stock > 0) {
       setCart([...cart, { ...product, quantity: 1 }]);
-    } else {
-      alert("Estoque insuficiente!");
     }
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(cart.filter(item => item.id !== productId));
   };
 
   const handleCheckout = () => {
@@ -72,42 +79,44 @@ export default function Home({ profile, onLogout }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar 
-        isAdmin={isAdmin} // Agora usa o valor dinâmico baseado no login
+        isAdmin={isAdmin} 
         onAddProduct={() => { setEditingProduct(null); setIsModalOpen(true); }}
         onLogout={onLogout} 
       />
       
-      <main className="p-4 md:p-8 max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold text-[#000040] uppercase tracking-tighter">
-                Catálogo de Produtos
-            </h1>
-            
-            {/* O botão de checkout só aparece para quem NÃO é admin (visão de usuário) */}
-            {!isAdmin && cart.length > 0 && (
-                <button 
-                    onClick={handleCheckout}
-                    className="bg-green-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:bg-green-700 transition-all"
-                >
-                    Finalizar Compra (R$ {cart.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2)})
-                </button>
-            )}
-        </div>
+      {/* Layout Flex para permitir o carrinho lateral */}
+      <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all ${!isAdmin && cart.length > 0 ? 'md:mr-80' : ''}`}>
+          <h1 className="text-2xl font-bold text-[#000040] mb-8 uppercase tracking-tighter">
+            Catálogo de Produtos
+          </h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map(product => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              isAdmin={isAdmin} // Condiciona a exibição de botões de edição
-              onEdit={() => { setEditingProduct(product); setIsModalOpen(true); }}
-              onAddToCart={addToCart}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map(product => (
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                isAdmin={isAdmin}
+                onEdit={() => { setEditingProduct(product); setIsModalOpen(true); }}
+                onAddToCart={addToCart}
+              />
+            ))}
+          </div>
+        </main>
+
+        {/* Carrinho Lateral: Só aparece para quem NÃO é admin */}
+        {!isAdmin && (
+          <aside className="w-full md:w-80 bg-white border-l border-gray-200 p-6 flex flex-col shadow-xl">
+            <Cart 
+              items={cart} 
+              onRemove={removeFromCart} 
+              onCheckout={handleCheckout} 
             />
-          ))}
-        </div>
-      </main>
+          </aside>
+        )}
+      </div>
 
       {isModalOpen && (
         <ProductModal 
