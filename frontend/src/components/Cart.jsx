@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function Cart({ items, updateQuantity, removeFromCart, onFinish }) {
+export default function Cart({ items, updateQuantity, removeFromCart, onFinish }) {
   const total = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   return (
@@ -16,13 +16,11 @@ export function Cart({ items, updateQuantity, removeFromCart, onFinish }) {
             </div>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                {/* Botão de Diminuir */}
                 <button 
                   onClick={() => updateQuantity(item.id, -1)} 
                   className="bg-gray-200 w-8 h-8 rounded-lg font-bold hover:bg-gray-300 transition"
                 >-</button>
                 <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
-                {/* Botão de Aumentar */}
                 <button 
                   onClick={() => updateQuantity(item.id, 1)} 
                   className="bg-gray-200 w-8 h-8 rounded-lg font-bold hover:bg-gray-300 transition"
