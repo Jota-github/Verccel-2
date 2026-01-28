@@ -1,40 +1,49 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import ProductCard from '../components/ProductCard';
 import Cart from '../components/Cart';
 import ProductModal from '../components/ProductModal';
 import CheckoutModal from '../components/CheckoutModal';
-import api from '../api/api';
+
+const INITIAL_PRODUCTS = [
+  { id: 1, name: "Bateria Moura 60Ah (M60AD)", price: 450.00, stock: 15 },
+  { id: 2, name: "Painel Solar 330W", price: 890.00, stock: 8 },
+  { id: 3, name: "Controlador de Carga MPPT", price: 320.00, stock: 12 },
+  { id: 4, name: "Inversor de Tensão", price: 1500.00, stock: 5 },
+  { id: 5, name: "Bateria Estacionária 105Ah", price: 980.00, stock: 20 }
+];
 
 export default function Home({ profile, onLogout }) {
   const isAdmin = profile === 'admin';
   
-  const [products, setProducts] = useState([]);
+  // Estado local de produtos (Simulação)
+  const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [cartItems, setCartItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const loadProducts = useCallback(async () => {
-    try {
-      const { data } = await api.get('/products');
-      if (data && data.length > 0) setProducts(data);
-      else throw new Error();
-    } catch (err) {
-      setProducts([
-        { id: 1, name: "Bateria Moura 60Ah (M60AD)", price: 450.00, stock: 15 },
-        { id: 2, name: "Painel Solar 330W", price: 890.00, stock: 8 },
-        { id: 3, name: "Controlador de Carga MPPT", price: 320.00, stock: 12 },
-        { id: 4, name: "Inversor de Tensão", price: 1500.00, stock: 5 },
-        { id: 5, name: "Bateria Estacionária 105Ah", price: 980.00, stock: 20 }
-      ]);
+  // --- LÓGICA DE ADMIN (PRODUTOS) ---
+  const handleSaveProduct = (productData) => {
+    if (productData.id) {
+      // Editar
+      setProducts(prev => prev.map(p => p.id === productData.id ? productData : p));
+    } else {
+      // Adicionar novo
+      const newProduct = { ...productData, id: Date.now() };
+      setProducts(prev => [...prev, newProduct]);
     }
-  }, []);
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  };
 
-  useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+  const handleDeleteProduct = (id) => {
+    if (window.confirm("Deseja excluir este produto?")) {
+      setProducts(prev => prev.filter(p => p.id !== id));
+    }
+  };
 
+  // --- LÓGICA DE USUÁRIO (CARRINHO) ---
   const handleAddToCart = (product) => {
     if (product.stock <= 0) return alert("Produto sem estoque!");
     
@@ -56,8 +65,9 @@ export default function Home({ profile, onLogout }) {
   const updateQuantity = (id, amount) => {
     setCartItems(prev => prev.map(item => {
       if (item.id === id) {
+        const product = products.find(p => p.id === id);
         const newQty = item.quantity + amount;
-        if (newQty >= 1 && newQty <= item.stock) {
+        if (newQty >= 1 && newQty <= (product?.stock || 99)) {
           return { ...item, quantity: newQty };
         }
       }
@@ -79,7 +89,9 @@ export default function Home({ profile, onLogout }) {
       
       <main className="p-4 md:p-8 max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
-          <h1 className="text-2xl font-black text-[#000040] mb-8 uppercase tracking-tighter">Catálogo de Produtos</h1>
+          <h1 className="text-2xl font-black text-[#000040] mb-8 uppercase tracking-tighter">
+            {isAdmin ? "Gerenciar Inventário" : "Catálogo de Produtos"}
+          </h1>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {products.map(p => (
               <ProductCard 
@@ -87,7 +99,8 @@ export default function Home({ profile, onLogout }) {
                 product={p} 
                 isAdmin={isAdmin} 
                 onAddToCart={handleAddToCart} 
-                onEdit={(prod) => { setSelectedProduct(prod); setIsModalOpen(true); }} 
+                onEdit={(prod) => { setSelectedProduct(prod); setIsModalOpen(true); }}
+                onDelete={handleDeleteProduct}
               />
             ))}
           </div>
@@ -110,7 +123,7 @@ export default function Home({ profile, onLogout }) {
           isOpen={isModalOpen} 
           onClose={() => { setIsModalOpen(false); setSelectedProduct(null); }} 
           product={selectedProduct} 
-          onSave={loadProducts} 
+          onSave={handleSaveProduct} 
         />
       )}
 
